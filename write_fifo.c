@@ -6,7 +6,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
-#include "input_creator.h"
 
 #define MAXTHREADS 4
 
@@ -15,11 +14,6 @@ void *writeFifo(void* fifo);
 
 int main(int argc, char *argv[])
 {
-	if(argc != 2){
-		printf("Usage: %s <numero de linhas> \n" ,argv[0]);
-		exit(-1);
-	}
-	createInput(atoi(argv[1]));
 	pthread_t threadsId[MAXTHREADS];
 	//Criação das threads que criam os fifos
 	int fifoId[MAXTHREADS];
@@ -65,16 +59,14 @@ void *writeFifo(void* fifo) {
 	char fileName[15];
 	sprintf(fileName, "input%d.dat", fifoId);
 
-	FILE* fp;
 	char buffer[41];
-
-	fp = fopen(fileName, "r");
-
-	while(fgets(buffer, 41, (FILE*) fp)) {
-    	write(fifoFD, buffer, strlen(buffer));
-    	sleep(1);
+	int fileFD;
+	fileFD = open(fileName, O_RDONLY);
+	int nread;
+	while((nread = read(fileFD, buffer, sizeof(buffer))) != 0) {
+		write(fifoFD, buffer, sizeof(buffer));
 	}
-	fclose(fp);
+	close(fileFD);
 	close(fifoFD);
 	pthread_exit(0);
 }

@@ -28,15 +28,15 @@ void *readFifo(void* fifo) {
 	int fifoId = *(int *)fifo;
 	char fifoName[15];
 	sprintf(fifoName, "fifo%d", fifoId);
-
-	FILE* fp;
+	int fifoFD;
+	fifoFD = open(fifoName, O_RDONLY);
 	char buffer[41];
-
-	fp = fopen(fifoName, "r");
-
-	while(fgets(buffer, 41, (FILE*) fp)) {
-		
-	}
-	fclose(fp);
+	int nread;
+	do {
+		while((nread = read(fifoFD, buffer, sizeof(buffer))) != 0) {
+			printf("%s", buffer);
+		}
+	} while (fifoId == TREADERS - 1);
+	close(fifoFD);
 	pthread_exit(0);
 }

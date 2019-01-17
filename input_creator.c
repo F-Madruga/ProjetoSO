@@ -15,7 +15,6 @@ char *portos[NUMPORTOS] = {"ANR", "BUS", "DXB", "GUA", "HAM", "HKG", "LAX", "RTM
 
 void *writeFile(void* file);
 char *getuuid();
-void createInput(int numberOfLines);
 
 struct FileData
 {
@@ -23,7 +22,13 @@ struct FileData
 	char fileName[15];
 };
 
-void createInput(int numberOfLines) {
+int main(int argc, char const *argv[])
+{
+	if(argc != 2){
+		printf("Usage: %s <numero de linhas> \n" ,argv[0]);
+		exit(-1);
+	}
+	
 	time_t t;
 	srand((unsigned)time(&t));
 
@@ -32,7 +37,7 @@ void createInput(int numberOfLines) {
 
 	//Criação das threads
 	for (int i = 0; i < THREADS; i++) {
-		file[i].numLines = numberOfLines;
+		file[i].numLines = atoi(argv[1]);
 		sprintf(file[i].fileName,"input%d.dat", i);
 		pthread_create(&threadsId[i], NULL, writeFile, (void *)&file[i]);
 	}
@@ -41,6 +46,7 @@ void createInput(int numberOfLines) {
 	for (int i = 0; i < THREADS; i++) {
 		pthread_join(threadsId[i], NULL);
 	}
+	return 0;
 }
 
 void *writeFile(void* file) {
