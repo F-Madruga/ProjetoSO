@@ -61,7 +61,7 @@ void *writeFile(void* file) {
 	fd = open(fileData.fileName, O_WRONLY | O_CREAT, 0666);
 	for (int i = 0; i < fileData.numLines; i++) {
 		char linha[50];
-		sprintf(linha, "%s|%s\n", getuuid(), portos[rand() % NUMPORTOS]);
+		sprintf(linha, "%s %s\n", getuuid(), portos[rand() % NUMPORTOS]);
 		write(fd, linha, strlen(linha));
 	}
 	close(fd);

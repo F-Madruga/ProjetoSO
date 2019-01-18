@@ -12,7 +12,7 @@
 void *createFifo(void* fifo);
 void *writeFifo(void* fifo);
 
-int main(int argc, char *argv[])
+int main()
 {
 	pthread_t threadsId[MAXTHREADS];
 	//Criação das threads que criam os fifos
