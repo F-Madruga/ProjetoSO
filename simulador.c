@@ -15,8 +15,8 @@ int out = 0;
 
 struct Contentor
 {
-	char numero_serie[36];
-	char porto_destino[4];
+	char numero_serie[37];
+	char porto_destino[3];
 	char *marca_tempo_entrada;
 	char *marca_tempo_saida; 
 };
@@ -54,22 +54,17 @@ void *readFifo(void* fifo) {
 	do {
 		char buffer[41];
 		struct Contentor contentor;
-		while((nread = read(fifoFD, buffer, sizeof(buffer))) != 0) {
-			int parte = 0;
-			int index = 0;
-			for (int i = 0; i < 41; i++) {
-				if (parte == 1) {
-					contentor.porto_destino[index] = buffer[i];
-				}
-				if (buffer[i] == ' ') {
-					parte = 1;
-					index = 0;
-				}
-				if (parte == 0) {
-					contentor.numero_serie[index] = buffer[i];
-				}
-				index++;
+		while((nread = read(fifoFD, buffer, sizeof(buffer))!=0)){
+			//printf("%s", buffer);
+			int i = 0;
+			char *divisao = strtok (buffer, " ");
+			char *referencias [2]; //este array fica com as cenas em memoria divididas
+			while(divisao != NULL){
+				referencias[i++] = divisao;
+				divisao = strtok (NULL, " ");
 			}
+			memcpy(contentor.numero_serie, referencias[0], 36);
+			memcpy(contentor.porto_destino, referencias[1], 3);
 			push(contentor);
 			//Adicionar na queue e esperar 1 seg
 			//Depois tira da queue mete na matriz e fica entre 1 a 5 segundos lá
