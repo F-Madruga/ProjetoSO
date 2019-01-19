@@ -15,8 +15,8 @@ int out = 0;
 
 struct Contentor
 {
-	char *numero_serie;
-	char *porto_destino;
+	char numero_serie[36];
+	char porto_destino[4];
 	char *marca_tempo_entrada;
 	char *marca_tempo_saida; 
 };
@@ -55,18 +55,20 @@ void *readFifo(void* fifo) {
 		char buffer[41];
 		struct Contentor contentor;
 		while((nread = read(fifoFD, buffer, sizeof(buffer))) != 0) {
-			char *token;
-			token = strtok(buffer, " ");
-			int dados = 0;
-			while (token != NULL) {
-				if (dados == 0) {
-					contentor.numero_serie = token;
+			int parte = 0;
+			int index = 0;
+			for (int i = 0; i < 41; i++) {
+				if (parte == 1) {
+					contentor.porto_destino[index] = buffer[i];
 				}
-				if (dados == 1) {
-					contentor.porto_destino = token;
+				if (buffer[i] == ' ') {
+					parte = 1;
+					index = 0;
 				}
-				token = strtok(NULL, " ");
-				dados++;
+				if (parte == 0) {
+					contentor.numero_serie[index] = buffer[i];
+				}
+				index++;
 			}
 			push(contentor);
 			//Adicionar na queue e esperar 1 seg
@@ -83,8 +85,12 @@ void *readFifo(void* fifo) {
 void push(struct Contentor contentor) {
 	int index;
 	index = ((in++) & (MAX - 1));
-	queue[index].numero_serie = contentor.numero_serie;
-	queue[index].porto_destino = contentor.porto_destino;
+	for (int i = 0; i < strlen(contentor.numero_serie); i++) {
+		queue[index].numero_serie[i] = contentor.numero_serie[i];
+	}
+	for (int i = 0; i < strlen(contentor.porto_destino); i++) {
+		queue[index].porto_destino[i] = contentor.porto_destino[i];
+	}
 	queue[index].marca_tempo_entrada = contentor.marca_tempo_entrada;
     queue[index].marca_tempo_saida = contentor.marca_tempo_saida;
 }
@@ -100,13 +106,17 @@ struct Contentor pop() {
 
 void display() {
 	for (int i = 0; i < MAX; i++) {
-		printf("%s, %s", queue[i].numero_serie, queue[i].porto_destino);
+		printf("%s, %s\n", queue[i].numero_serie, queue[i].porto_destino);
 	}
 }
 
 void clean(int i) {
-	queue[i].numero_serie = NULL;
-    queue[i].porto_destino = NULL;
+	for (int j = 0; i < strlen(queue[i].numero_serie); j++) {
+		queue[i].numero_serie[j] = NULL;
+	}
+	for (int j = 0; i < strlen(queue[i].porto_destino); j++) {
+		queue[i].porto_destino[j] = NULL;
+	}
     queue[i].marca_tempo_entrada = NULL;
     queue[i].marca_tempo_saida = NULL;
 }
