@@ -25,7 +25,9 @@ struct Contentor queue[MAX];
 
 void push(struct Contentor contentor);
 struct Contentor pop();
+void clean(int i);
 void display();
+
 void *readFifo(void* fifo);
 
 int main() {
@@ -48,9 +50,9 @@ void *readFifo(void* fifo) {
 	int fifoFD;
 	fifoFD = open(fifoName, O_RDONLY);
 	getchar();
-	char buffer[41];
 	int nread;
 	do {
+		char buffer[41];
 		struct Contentor contentor;
 		while((nread = read(fifoFD, buffer, sizeof(buffer))) != 0) {
 			char *token;
@@ -73,7 +75,7 @@ void *readFifo(void* fifo) {
 			//Escrever no fifo
 		}
 	} while (fifoId == TREADERS - 1);
-	//display();
+	display();
 	close(fifoFD);
 	pthread_exit(0);
 }
@@ -83,6 +85,8 @@ void push(struct Contentor contentor) {
 	index = ((in++) & (MAX - 1));
 	queue[index].numero_serie = contentor.numero_serie;
 	queue[index].porto_destino = contentor.porto_destino;
+	queue[index].marca_tempo_entrada = contentor.marca_tempo_entrada;
+    queue[index].marca_tempo_saida = contentor.marca_tempo_saida;
 }
 
 struct Contentor pop() {
@@ -90,13 +94,19 @@ struct Contentor pop() {
 	index = ((out++) & (MAX - 1));
 	struct Contentor contentor;
 	contentor = queue[index];
+	clean(index);
 	return contentor;
 }
 
 void display() {
 	for (int i = 0; i < MAX; i++) {
-		if (queue[i].numero_serie != NULL) {
-			printf("%s, %s", queue[i].numero_serie, queue[i].porto_destino);
-		}
+		printf("%s, %s", queue[i].numero_serie, queue[i].porto_destino);
 	}
+}
+
+void clean(int i) {
+	queue[i].numero_serie = NULL;
+    queue[i].porto_destino = NULL;
+    queue[i].marca_tempo_entrada = NULL;
+    queue[i].marca_tempo_saida = NULL;
 }
