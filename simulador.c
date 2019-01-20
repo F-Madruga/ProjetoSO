@@ -30,6 +30,7 @@ int out[TWRITTERS + 1];
 struct Contentor estacionamento[LUGARES][LUGARES];
 int xIn = -1;
 int yIn = -1;
+int active = 0;
 
 const char *portos[TWRITTERS] = {"ANR", "BUS", "DXB", "GUA", "HAM", "HKG", "LAX", "RTM", "SHA", "SIN"};
 
@@ -88,6 +89,7 @@ int main() {
 	for (int i = 0; i < TREADERS; i++) {
 		pthread_join(threadsId[i], NULL);
 	}
+	active = 1;
 	pthread_join(dequeueThread, NULL);
 
 	for (int i = 0; i < TWRITTERS; i++) {
@@ -103,33 +105,31 @@ void *readFifo(void* fifo) {
 	int fifoFD;
 	fifoFD = open(fifoName, O_RDONLY);
 	int nread;
-	do {
-		char buffer[41];
-		struct Contentor contentor;
-		while((nread = read(fifoFD, buffer, sizeof(buffer))!=0)) {
-			int i = 0;
-			char *divisao = strtok (buffer, " ");
-			char *referencias [2];
-			while(divisao != NULL){
-				referencias[i++] = divisao;
-				divisao = strtok (NULL, " ");
-			}
-			memcpy(contentor.numero_serie, referencias[0], 36);
-			memcpy(contentor.porto_destino, referencias[1], 3);
-			sem_wait(&sem1[0]);
-			pthread_mutex_lock(&mutex);
-			push(contentor, 0);
-			sleep(1);
-			pthread_mutex_unlock(&mutex);
-			sem_post(&sem2[0]);
+	char buffer[41];
+	struct Contentor contentor;
+	while((nread = read(fifoFD, buffer, sizeof(buffer))!=0)) {
+		int i = 0;
+		char *divisao = strtok (buffer, " ");
+		char *referencias [2];
+		while(divisao != NULL){
+			referencias[i++] = divisao;
+			divisao = strtok (NULL, " ");
 		}
-	} while (fifoId == TREADERS - 1);
+		memcpy(contentor.numero_serie, referencias[0], 36);
+		memcpy(contentor.porto_destino, referencias[1], 3);
+		sem_wait(&sem1[0]);
+		pthread_mutex_lock(&mutex);
+		push(contentor, 0);
+		sleep(1);
+		pthread_mutex_unlock(&mutex);
+		sem_post(&sem2[0]);
+	}
 	close(fifoFD);
 	pthread_exit(0);
 }
 
 void *dequeue(void* arg) {
-	while (1) {
+	while (active == 0 || isEmpty(0) == 1) {
 		sem_wait(&sem2[0]);
 		struct Contentor contentor;
 		contentor = pop(0);
@@ -175,7 +175,6 @@ void *estacionar(void* contentor) {
 		if (porto_compare(estacionamento[x][y].porto_destino, portos[i])) {
 			sem_wait(&sem1[i + 1]);
 			push(estacionamento[x][y], i + 1);
-			//display(i + 1);
 			sleep(2);
 			sem_post(&sem2[i + 1]);
 			break;
@@ -185,7 +184,6 @@ void *estacionar(void* contentor) {
 	estacionamento[x][y].porto_destino[0] = '\0';
     estacionamento[x][y].marca_tempo_entrada = 0;
     estacionamento[x][y].marca_tempo_saida = 0;
-	//printf("%s, %s - (%d, %d)\n", estacionamento[x][y].numero_serie, estacionamento[x][y].porto_destino, x, y);
 	pthread_mutex_unlock(&mutexes[x][y]);
 	pthread_exit(0);
 }
@@ -206,7 +204,7 @@ void *writeFifo(void* fifo) {
   	}
 	int fifoFD;
 	fifoFD = open(fifoName, O_WRONLY);
-	while (1) {
+	while (active == 0 || isEmpty(fifoId + 1) == 0) {
 		sem_wait(&sem2[fifoId + 1]);
 		struct Contentor contentor;
 		char linha[100];
