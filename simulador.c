@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <semaphore.h>
+#include <time.h>
 
 #define TREADERS 4
 #define MAX 16
@@ -17,9 +18,9 @@ int out = 0;
 struct Contentor
 {
 	char numero_serie[37];
-	char porto_destino[3];
-	char *marca_tempo_entrada;
-	char *marca_tempo_saida; 
+	char porto_destino[4];
+	long marca_tempo_entrada;
+	long marca_tempo_saida; 
 };
 
 struct Contentor queue[MAX];
@@ -43,6 +44,7 @@ void *deque(void* arg);
 int main() {
 	pthread_t threadsId[TREADERS];
 	pthread_t dequeThread;
+	
 	int fifoId[TREADERS];
 	pthread_mutex_init(&mutex,NULL);
 	sem_init(&sem1,0,0);
@@ -98,6 +100,11 @@ void *deque(void* arg) {
 		sem_wait(&sem2);
 		struct Contentor contentor;
 		contentor = pop();
+		if (contentor.numero_serie[0] != '\0') {
+			time_t timeNow = time(NULL);
+			contentor.marca_tempo_entrada = timeNow;
+			printf("%s, %s, %ld, %ld\n", contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
+		}
 		sem_post(&sem1);
 	}
 	pthread_exit(0);
@@ -134,8 +141,8 @@ void display() {
 void clean(int i) {
 	queue[i].numero_serie[0] = '\0';
 	queue[i].porto_destino[0] = '\0';
-    queue[i].marca_tempo_entrada = NULL;
-    queue[i].marca_tempo_saida = NULL;
+    queue[i].marca_tempo_entrada = 0;
+    queue[i].marca_tempo_saida = 0;
 }
 
 int isFull() {
