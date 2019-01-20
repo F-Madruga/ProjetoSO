@@ -49,16 +49,14 @@ void *readFifo(void* fifo) {
 	sprintf(fifoName, "fifo%d", fifoId);
 	int fifoFD;
 	fifoFD = open(fifoName, O_RDONLY);
-	getchar();
 	int nread;
 	do {
 		char buffer[41];
 		struct Contentor contentor;
-		while((nread = read(fifoFD, buffer, sizeof(buffer))!=0)){
-			//printf("%s", buffer);
+		while((nread = read(fifoFD, buffer, sizeof(buffer))!=0)) {
 			int i = 0;
 			char *divisao = strtok (buffer, " ");
-			char *referencias [2]; //este array fica com as cenas em memoria divididas
+			char *referencias [2];
 			while(divisao != NULL){
 				referencias[i++] = divisao;
 				divisao = strtok (NULL, " ");
@@ -66,13 +64,9 @@ void *readFifo(void* fifo) {
 			memcpy(contentor.numero_serie, referencias[0], 36);
 			memcpy(contentor.porto_destino, referencias[1], 3);
 			push(contentor);
-			//Adicionar na queue e esperar 1 seg
-			//Depois tira da queue mete na matriz e fica entre 1 a 5 segundos lá
-			//Depois tira da matriz e mete numa das queues para escrever no fifo e espera no 2 seg antes de escrever
-			//Escrever no fifo
 		}
 	} while (fifoId == TREADERS - 1);
-	display();
+
 	close(fifoFD);
 	pthread_exit(0);
 }
@@ -80,10 +74,10 @@ void *readFifo(void* fifo) {
 void push(struct Contentor contentor) {
 	int index;
 	index = ((in++) & (MAX - 1));
-	for (int i = 0; i < strlen(contentor.numero_serie); i++) {
+	for (int i = 0; i < sizeof(contentor.numero_serie); i++) {
 		queue[index].numero_serie[i] = contentor.numero_serie[i];
 	}
-	for (int i = 0; i < strlen(contentor.porto_destino); i++) {
+	for (int i = 0; i < sizeof(contentor.porto_destino); i++) {
 		queue[index].porto_destino[i] = contentor.porto_destino[i];
 	}
 	queue[index].marca_tempo_entrada = contentor.marca_tempo_entrada;
@@ -106,12 +100,8 @@ void display() {
 }
 
 void clean(int i) {
-	for (int j = 0; i < strlen(queue[i].numero_serie); j++) {
-		queue[i].numero_serie[j] = NULL;
-	}
-	for (int j = 0; i < strlen(queue[i].porto_destino); j++) {
-		queue[i].porto_destino[j] = NULL;
-	}
+	queue[i].numero_serie[0] = '\0';
+	queue[i].porto_destino[0] = '\0';
     queue[i].marca_tempo_entrada = NULL;
     queue[i].marca_tempo_saida = NULL;
 }

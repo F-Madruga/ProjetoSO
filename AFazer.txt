@@ -1,0 +1,4 @@
+- Adicionar na queue e esperar 1 seg
+- Depois tira da queue mete na matriz e fica entre 1 a 5 segundos lá
+- Depois tira da matriz e mete numa das queues para escrever no fifo e espera no 2 seg antes de escrever
+- Escrever no fifo
