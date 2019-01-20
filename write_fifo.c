@@ -31,7 +31,7 @@ int main()
 void *createFifo(void* fifo) {
 	int fifoId = *(int *)fifo;
 	char fifoName[15];
-	sprintf(fifoName, "fifo%d", fifoId);
+	sprintf(fifoName, "FIFO-IN%d", fifoId);
 
 	//Apaga o fifo caso ele já exista
 	if (access(fifoName, F_OK) != -1 ) {
@@ -52,7 +52,7 @@ void *writeFifo(void* fifo) {
 	int numLinhas = 0;
 	int fifoId = *(int *)fifo;
 	char fifoName[15];
-	sprintf(fifoName, "fifo%d", fifoId);
+	sprintf(fifoName, "FIFO-IN%d", fifoId);
 	int fifoFD;
 	fifoFD = open(fifoName, O_WRONLY);
 
