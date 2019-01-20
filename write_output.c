@@ -48,9 +48,11 @@ void *writeOutput(void *fifo) {
     int fileFD;
 	fileFD = open("OUTPUT.txt", O_WRONLY | O_CREAT, 0666);
     int nread;
-    char buffer[54];
+    char buffer[53];
+    int x = 0;
 	struct Contentor contentor;
     while((nread = read(fifoFD, buffer, sizeof(buffer))!=0)) {
+        if (x == 0) {
 			int i = 0;
 			char *divisao = strtok (buffer, " ");
 			char *referencias [4];
@@ -60,16 +62,26 @@ void *writeOutput(void *fifo) {
 			}
 			memcpy(contentor.numero_serie, referencias[0], 36);
 			memcpy(contentor.porto_destino, referencias[1], 3);
-            memcpy(&contentor.marca_tempo_entrada, referencias[2], sizeof(long));
-            memcpy(&contentor.marca_tempo_saida, referencias[3], sizeof(long));
+            char entrada[11];
+            memcpy(entrada, referencias[2], 10);
+            char saida[2];
+            memcpy(saida, referencias[3], 1);
+            contentor.marca_tempo_entrada = atol(entrada);
+            contentor.marca_tempo_saida = atol(saida);
+            printf("1 - %s, %s, %ld, %ld\n", contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
             pthread_mutex_lock(&mutex360);
             time_t timeNow = time(NULL);
 			contentor.marca_tempo_saida = timeNow;
-            printf("%s, %s\n", contentor.numero_serie, contentor.porto_destino);
+            printf("2 - %s, %s, %ld, %ld\n", contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
             char linha[63];
             sprintf(linha, "%s %s %ld %ld\n",contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
 			write(fileFD, linha, sizeof(linha));
+            x = 1;
             pthread_mutex_unlock(&mutex360);
+        }
+        else {
+            x = 0;
+        }
     }
     printf("A thread %d acabou\n", fifoId);
     close(fifoFD);
