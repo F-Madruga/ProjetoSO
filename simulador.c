@@ -84,9 +84,7 @@ void *readFifo(void* fifo) {
 			sem_wait(&sem1);
 			pthread_mutex_lock(&mutex);
 			push(contentor);
-			printf("Display\n");
-			display();
-			printf("\n");
+			sleep(1);
 			pthread_mutex_unlock(&mutex);
 			sem_post(&sem2);
 		}
@@ -100,8 +98,6 @@ void *deque(void* arg) {
 		sem_wait(&sem2);
 		struct Contentor contentor;
 		contentor = pop();
-		sleep(2);
-		printf("Pop = %s, %s\n", contentor.numero_serie, contentor.porto_destino);
 		sem_post(&sem1);
 	}
 	pthread_exit(0);
