@@ -11,9 +11,8 @@
 
 #define TREADERS 4
 #define MAX 16
+#define LUGARES 10
 
-int in = 0;
-int out = 0;
 
 struct Contentor
 {
@@ -24,12 +23,19 @@ struct Contentor
 };
 
 struct Contentor queue[MAX];
+int in = 0;
+int out = 0;
+int k = 0;
+
+struct Contentor estacionamento[LUGARES][LUGARES];
+int xIn = -1;
+int yIn = -1;
 
 sem_t sem1;
 sem_t sem2;
+pthread_mutex_t mutexEstacionamento;
 pthread_mutex_t mutex;
-
-int active = 1;
+pthread_mutex_t mutexes[LUGARES][LUGARES];
 
 void push(struct Contentor contentor);
 struct Contentor pop();
@@ -39,17 +45,26 @@ int isFull();
 int isEmpty();
 
 void *readFifo(void* fifo);
-void *deque(void* arg);
+void *dequeue(void* arg);
+void *estacionar(void* contentor);
 
 int main() {
+	time_t t;
+	srand((unsigned)time(&t));
 	pthread_t threadsId[TREADERS];
-	pthread_t dequeThread;
-	
+	pthread_t dequeueThread;
 	int fifoId[TREADERS];
-	pthread_mutex_init(&mutex,NULL);
-	sem_init(&sem1,0,0);
-	sem_init(&sem2,0,MAX);
-	pthread_create(&dequeThread, NULL, deque, (void *)NULL);
+	pthread_mutex_init(&mutex, NULL);
+	pthread_mutex_init(&mutexEstacionamento, NULL);
+	for (int x = 0; x < LUGARES; x++) {
+		for (int y = 0; y < LUGARES; y++) {
+			pthread_mutex_init(&mutexes[x][y], NULL);
+		}
+	}
+	
+	sem_init(&sem1, 0, 0);
+	sem_init(&sem2, 0, MAX);
+	pthread_create(&dequeueThread, NULL, dequeue, (void *)NULL);
 	for (int i = 0; i < TREADERS; i++) {
 		fifoId[i] = i;
 		pthread_create(&threadsId[i], NULL, readFifo, (void *)&fifoId[i]);
@@ -58,8 +73,7 @@ int main() {
 	for (int i = 0; i < TREADERS; i++) {
 		pthread_join(threadsId[i], NULL);
 	}	
-	active = 0;	
-	pthread_join(dequeThread, NULL);
+	pthread_join(dequeueThread, NULL);
 	return 0;
 }
 
@@ -95,7 +109,7 @@ void *readFifo(void* fifo) {
 	pthread_exit(0);
 }
 
-void *deque(void* arg) {
+void *dequeue(void* arg) {
 	while (1) {
 		sem_wait(&sem2);
 		struct Contentor contentor;
@@ -103,10 +117,50 @@ void *deque(void* arg) {
 		if (contentor.numero_serie[0] != '\0') {
 			time_t timeNow = time(NULL);
 			contentor.marca_tempo_entrada = timeNow;
-			printf("%s, %s, %ld, %ld\n", contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
+			pthread_t threadsId;
+			pthread_create(&threadsId, NULL, estacionar,(void *)&contentor);
+			//pthread_join(threadsId, NULL);
 		}
 		sem_post(&sem1);
 	}
+	pthread_exit(0);
+}
+
+void *estacionar(void* contentor) {
+	struct Contentor container = *(struct Contentor *)contentor;
+	pthread_mutex_lock(&mutexEstacionamento);
+	if (xIn == -1 && yIn == -1) {
+		xIn = 0;
+		yIn = 0;
+	}
+	else {
+		if (xIn < LUGARES - 1) {
+			xIn++;
+		}
+		else {
+			xIn = 0;
+			if (yIn < LUGARES - 1) {
+				yIn++;
+			}
+			else {
+				yIn = 0;
+			}
+		}
+	}
+	int x = xIn;
+	int y = yIn;
+	pthread_mutex_lock(&mutexes[x][y]);
+	estacionamento[x][y] = container;
+	k++;
+	printf("%s, %s - (%d, %d) num = %d\n", estacionamento[x][y].numero_serie, estacionamento[x][y].porto_destino, x, y,k);
+	pthread_mutex_unlock(&mutexEstacionamento);
+	sleep((rand() + 1) % 6);
+	estacionamento[x][y].numero_serie[0] = '\0';
+	estacionamento[x][y].porto_destino[0] = '\0';
+    estacionamento[x][y].marca_tempo_entrada = 0;
+    estacionamento[x][y].marca_tempo_saida = 0;
+	printf("%s, %s - (%d, %d)\n", estacionamento[x][y].numero_serie, estacionamento[x][y].porto_destino, x, y);
+	pthread_mutex_unlock(&mutexes[x][y]);
 	pthread_exit(0);
 }
 
