@@ -65,7 +65,7 @@ void *writeOutput(void *fifo) {
             pthread_mutex_lock(&mutex360);
             time_t timeNow = time(NULL);
 			contentor.marca_tempo_saida = timeNow;
-            printf("")
+            printf("%s, %s\n", contentor.numero_serie, contentor.porto_destino);
             char linha[63];
             sprintf(linha, "%s %s %ld %ld\n",contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
 			write(fileFD, linha, sizeof(linha));
