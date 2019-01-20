@@ -51,6 +51,7 @@ void *readFifo(void* fifo) {
 	fifoFD = open(fifoName, O_RDONLY);
 	int nread;
 	do {
+		getchar();
 		char buffer[41];
 		struct Contentor contentor;
 		while((nread = read(fifoFD, buffer, sizeof(buffer))!=0)) {
@@ -66,7 +67,7 @@ void *readFifo(void* fifo) {
 			push(contentor);
 		}
 	} while (fifoId == TREADERS - 1);
-
+	display();
 	close(fifoFD);
 	pthread_exit(0);
 }
