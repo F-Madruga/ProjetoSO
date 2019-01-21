@@ -129,7 +129,7 @@ void *readFifo(void* fifo) {
 }
 
 void *dequeue(void* arg) {
-	while (active == 0 || isEmpty(0) == 1) {
+	while (active == 0 || isEmpty(0) == 0) {
 		sem_wait(&sem2[0]);
 		struct Contentor contentor;
 		contentor = pop(0);
@@ -212,6 +212,7 @@ void *writeFifo(void* fifo) {
 		if (contentor.numero_serie[0] != '\0') {
 			sprintf(linha, "%s %s %ld %ld\n",contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
 			write(fifoFD, linha, sizeof(linha));
+			printf("%s", linha);
 		}
 		sem_post(&sem1[fifoId + 1]);
 	}

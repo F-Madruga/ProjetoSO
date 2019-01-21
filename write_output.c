@@ -15,13 +15,17 @@ struct Contentor
 	long marca_tempo_entrada;
 	long marca_tempo_saida; 
 };
-
+int fileFD;
 pthread_mutex_t mutex360;
 
 void *writeOutput(void * fifo);
 
 int main()
 {
+    if (access("OUTPUT.txt", F_OK) != -1 ) {
+		remove("OUTPUT.txt");
+	}
+    fileFD = open("OUTPUT.txt", O_WRONLY | O_CREAT, 0666);
     pthread_t threadsId[MAXTHREADS];
     int fifoId[MAXTHREADS];
     pthread_mutex_init(&mutex360, NULL);
@@ -40,19 +44,15 @@ void *writeOutput(void *fifo) {
     int fifoId = *(int *)fifo;
     char fifoName[15];
 	sprintf(fifoName, "FIFO-OUT%d", fifoId);
-	int fifoFD;
-	fifoFD = open(fifoName, O_RDONLY);
-    if (access("OUTPUT.txt", F_OK) != -1 ) {
-		remove("OUTPUT.txt");
-	}
-    int fileFD;
-	fileFD = open("OUTPUT.txt", O_WRONLY | O_CREAT, 0666);
+    int fifoFD;
+    fifoFD = open(fifoName, O_RDONLY);
     int nread;
     char buffer[53];
     int x = 0;
 	struct Contentor contentor;
     while((nread = read(fifoFD, buffer, sizeof(buffer))!=0)) {
         if (x == 0) {
+            pthread_mutex_lock(&mutex360);
 			int i = 0;
 			char *divisao = strtok (buffer, " ");
 			char *referencias [4];
@@ -68,14 +68,12 @@ void *writeOutput(void *fifo) {
             memcpy(saida, referencias[3], 1);
             contentor.marca_tempo_entrada = atol(entrada);
             contentor.marca_tempo_saida = atol(saida);
-            printf("1 - %s, %s, %ld, %ld\n", contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
-            pthread_mutex_lock(&mutex360);
             time_t timeNow = time(NULL);
 			contentor.marca_tempo_saida = timeNow;
-            printf("2 - %s, %s, %ld, %ld\n", contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
             char linha[63];
             sprintf(linha, "%s %s %ld %ld\n",contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
 			write(fileFD, linha, sizeof(linha));
+            printf("%s", linha);
             x = 1;
             pthread_mutex_unlock(&mutex360);
         }
