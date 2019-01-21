@@ -73,7 +73,6 @@ void *writeOutput(void *fifo) {
             char linha[63];
             sprintf(linha, "%s %s %ld %ld\n",contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
 			write(fileFD, linha, sizeof(linha));
-            printf("%s", linha);
             x = 1;
             pthread_mutex_unlock(&mutex360);
         }
@@ -81,7 +80,6 @@ void *writeOutput(void *fifo) {
             x = 0;
         }
     }
-    printf("A thread %d acabou\n", fifoId);
     close(fifoFD);
 	pthread_exit(0);
 }
