@@ -70,9 +70,10 @@ void *writeOutput(void *fifo) {
             contentor.marca_tempo_saida = atol(saida);
             time_t timeNow = time(NULL);
 			contentor.marca_tempo_saida = timeNow;
-            char linha[63];
+            char linha[100];
             sprintf(linha, "%s %s %ld %ld\n",contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
 			write(fileFD, linha, sizeof(linha));
+            printf("%s", linha);
             x = 1;
             pthread_mutex_unlock(&mutex360);
         }
