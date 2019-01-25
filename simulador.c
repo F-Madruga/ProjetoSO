@@ -212,7 +212,6 @@ void *writeFifo(void* fifo) {
 		if (contentor.numero_serie[0] != '\0') {
 			sprintf(linha, "%s %s %ld %ld\n",contentor.numero_serie, contentor.porto_destino, contentor.marca_tempo_entrada, contentor.marca_tempo_saida);
 			write(fifoFD, linha, sizeof(linha));
-			printf("%s", linha);
 		}
 		sem_post(&sem1[fifoId + 1]);
 	}
